@@ -10,6 +10,7 @@ namespace Mango.Services.ProductAPI.Controllers
 {
     [Route("api/product")]
     [ApiController]
+   // [Authorize]
     public class ProductAPIController : ControllerBase
     {
         private readonly AppDbContext _db;
@@ -19,6 +20,7 @@ namespace Mango.Services.ProductAPI.Controllers
         {
                 _db = db;
             _mapper = mapper;
+            _response=new ResponseDto();
                
         }
         [HttpGet]
@@ -28,7 +30,8 @@ namespace Mango.Services.ProductAPI.Controllers
             try
             {
                 IEnumerable<Product> obj = _db.Products.ToList();
-                _response.Result = _mapper.Map<ProductDto>(obj);
+                _response.Result = _mapper.Map<IEnumerable<ProductDto>>(obj);
+                _db.SaveChanges();
             }
             catch (Exception ex)
             {
@@ -39,12 +42,12 @@ namespace Mango.Services.ProductAPI.Controllers
 
         }
         [HttpGet]
-        [Route("{id:int}")]
-        public ResponseDto Get(int id) 
+        [Route("{ProductId:int}")]
+        public ResponseDto Get(int ProductId) 
         {
             try
             {
-                 Product obj = _db.Products.First(p => p.ProductId == id);
+                 Product obj = _db.Products.FirstOrDefault(p => p.ProductId ==ProductId);
                 _response.Result = _mapper.Map<ProductDto>(obj);
             }
             catch (Exception ex)
@@ -56,7 +59,7 @@ namespace Mango.Services.ProductAPI.Controllers
 
         }
         [HttpPost]
-       // [Authorize(Roles = "ADMIN")]
+       [Authorize(Roles = "ADMIN")]
         public ResponseDto Post([FromBody] ProductDto  productDto)
 
         {
@@ -75,7 +78,7 @@ namespace Mango.Services.ProductAPI.Controllers
             return _response;
         }
         [HttpPut]
-        //[Authorize(Roles = "ADMIN")]
+        [Authorize(Roles = "ADMIN")]
         public ResponseDto Put([FromBody] ProductDto productDto)
 
         {
@@ -95,11 +98,12 @@ namespace Mango.Services.ProductAPI.Controllers
         }
         [HttpDelete]
         [Route("{id:int}")]
+        [Authorize(Roles ="ADMIN")]
         public ResponseDto Delete(int id)
         {
             try
             {
-                Product obj = _db.Products.First(p => p.ProductId==id);
+                Product obj = _db.Products.FirstOrDefault(p => p.ProductId==id);
                 _db.Products.Remove(obj);
                 _db.SaveChanges();
 
